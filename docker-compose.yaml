@@ -1,0 +1,54 @@
+version: '2'
+services:
+
+  postgres:
+    image: postgres:alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=test
+      - POSTGRES_PASSWORD=test
+      - POSTGRES_DB=test
+    volumes:
+      - ./docker/pgadmin/shared:/shared
+    ports:
+      - 5432:5432
+    networks:
+      - default
+
+  migrations:
+    image: microsoft/dotnet:2.2-sdk-alpine3.8
+    working_dir: /app/EFCoreEnumToStringTest
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=test
+      - POSTGRES_PASSWORD=test
+      - POSTGRES_DB=test
+    volumes:
+      - .:/app/EFCoreEnumToStringTest
+    tmpfs:
+      # Overwrite mounted obj folder with empty one
+      - /app/EFCoreEnumToStringTest/obj
+    depends_on:
+      - postgres
+    networks:
+     - default
+
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: unless-stopped
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=pgadmin4@pgadmin.org
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    volumes:
+      - ./docker/pgadmin/shared/:/shared
+    depends_on:
+      - postgres
+    ports:
+      - 5050:80
+    networks:
+      - default
+
+networks:
+  default:
+    driver: bridge
